@@ -12,7 +12,36 @@ public class GameManager : MonoBehaviour
     Dice dice;
     [SerializeField]
     GameObject particle;
+    [SerializeField]
+    CharacterController2D player;
     public bool increaseSpawnSpeed = false;
+    private int randDie;
+    private bool canEnemyfire = false;
+
+    public bool CanEnemyFire
+    {
+        get
+        {
+            return canEnemyfire;
+        }
+
+        set
+        {
+            canEnemyfire = value;
+        }
+    }
+    public int RandDie
+    {
+        set
+        {
+            randDie = value;
+        }
+
+        get
+        {
+            return randDie;
+        }
+    }
 
     private static GameManager _instance;
 
@@ -32,7 +61,9 @@ public class GameManager : MonoBehaviour
     private void Start()
     {
         dice = GameObject.Find("Dice").GetComponent<Dice>();
-        StartCoroutine(SpawnCoroutine());    
+        player = GameObject.Find("Player").GetComponent<CharacterController2D>();
+        StartCoroutine(SpawnCoroutine()); 
+        randDie = RollDice();
     }
 
     IEnumerator SpawnCoroutine()
@@ -41,7 +72,7 @@ public class GameManager : MonoBehaviour
         {
             int randomSpawnPosition = Random.Range(0, 4);
 
-            float spawnSpeed = increaseSpawnSpeed ? 0.1f : 0.25f;
+            float spawnSpeed = increaseSpawnSpeed ? 0.25f : 0.5f;
 
             Vector3[] spawnLocation =
             {
@@ -60,6 +91,20 @@ public class GameManager : MonoBehaviour
     public void PlayerDeath()
     {
         Destroy(dice.gameObject);
+        Destroy(player.gameObject);
         Instantiate(particle, dice.transform.position, Quaternion.identity);
+        Instantiate(particle, player.transform.position, Quaternion.identity);
+        StopTime();
+    }
+
+    void StopTime()
+    {
+        UIManager.Instance.EnableGameOverScreen();
+    }
+
+    public int RollDice()
+    {
+        int ranInt = Random.Range(0, 6);
+        return ranInt;
     }
 }

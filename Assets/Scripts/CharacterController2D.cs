@@ -20,39 +20,42 @@ public class CharacterController2D : MonoBehaviour
     [SerializeField]
     float currentTime = 0.0f;
     [SerializeField]
-    private int randDie;
+    int score = 0;
     bool decreasePlayerSpeed = false;
     Dice dice;
-    
-    public int RandDie
-    { 
+    [SerializeField]
+    AudioClip shootClip;
+    AudioSource audioSource;
+
+    public int Score
+    {
         set
         {
-            randDie = value;
+            score = value;
         }
 
         get
         {
-            return randDie;
+            return score;
         }
     }
+   
 
     private void Start()
     {
-        randDie = RollDice();
-
-        if (randDie == 0)
-            randDie = RollDice();
-
         dice = GameObject.Find("Dice").GetComponent<Dice>();
+        audioSource = GetComponent<AudioSource>();
 
         if (!dice)
             return;
+
+        if (audioSource)
+            audioSource.clip = shootClip;
     }
 
     private void Update()
     {
-        float speed = decreasePlayerSpeed ? playerSpeed / 2 : playerSpeed;
+        float speed = decreasePlayerSpeed ? playerSpeed / 4 : playerSpeed;
         float hMov = Input.GetAxis("Horizontal") * speed;
         float vMov = Input.GetAxis("Vertical") * speed;
 
@@ -74,38 +77,50 @@ public class CharacterController2D : MonoBehaviour
 
         
 
-        switch (randDie)
+        switch (GameManager.Instance.RandDie)
         {
             case 0:
-                dice.Health -= 10;
                 SingleShot();
-                Debug.Log(0);
+                GameManager.Instance.CanEnemyFire = true;
+                UIManager.Instance.DisplayText("Enemy Fire");
                 break;
             case 1:
                 FourShots();
+                GameManager.Instance.CanEnemyFire = false;
+                UIManager.Instance.DisplayText("Four Direction Shot");
                 decreasePlayerSpeed = false;
                 GameManager.Instance.increaseSpawnSpeed = false;
                 break;
             case 2:
                 GameManager.Instance.increaseSpawnSpeed = true;
+                GameManager.Instance.CanEnemyFire = false;
+                UIManager.Instance.DisplayText("More Enemies");
                 decreasePlayerSpeed = false;
                 SingleShot();
                 break;
             case 3:
                 RapidShot();
                 GameManager.Instance.increaseSpawnSpeed = false;
+                GameManager.Instance.CanEnemyFire = false;
+                UIManager.Instance.DisplayText("Rapid Shot");
                 decreasePlayerSpeed = false;
                 break;
             case 4:
                 decreasePlayerSpeed = true;
+                UIManager.Instance.DisplayText("Decreased Speed");
+                GameManager.Instance.CanEnemyFire = false;
                 GameManager.Instance.increaseSpawnSpeed = false;
                 SingleShot();
                 break;
             case 5:
                 EightShots();
+                UIManager.Instance.DisplayText("Eight Direction Shot");
+                GameManager.Instance.CanEnemyFire = false;
                 decreasePlayerSpeed = false;
                 break;
         }
+
+        UIManager.Instance.DisplayScore(score);
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
@@ -115,10 +130,9 @@ public class CharacterController2D : MonoBehaviour
             Destroy(collision.gameObject);
             GameObject p = Instantiate(particle, this.transform.position, Quaternion.identity);
             Destroy(p, 2.5f);
+            score += 5;
         }
-    }
-
-    
+    }  
 
     #region Single Shot
     private void SingleShot()
@@ -133,6 +147,7 @@ public class CharacterController2D : MonoBehaviour
         {
             nextTimeToFire = Time.time + fireRate;
             Instantiate(projectile, spawnPos[0].transform.position, Quaternion.Euler(0, 0, angle));
+            audioSource.Play();
         }
     }
     #endregion
@@ -146,7 +161,8 @@ public class CharacterController2D : MonoBehaviour
 
             for(int i = 1; i < 5; i++)
             {
-                Instantiate(projectile, spawnPos[i].transform.position, spawnPos[i].transform.rotation);   
+                Instantiate(projectile, spawnPos[i].transform.position, spawnPos[i].transform.rotation);
+                audioSource.Play();
             } 
         }
     }
@@ -167,6 +183,7 @@ public class CharacterController2D : MonoBehaviour
         if (Input.GetMouseButton(0))
         {
             Instantiate(projectile, spawnPos[0].transform.position, Quaternion.Euler(0, 0, angle));
+            audioSource.Play();
         }
     }
     #endregion
@@ -181,14 +198,9 @@ public class CharacterController2D : MonoBehaviour
             for (int i = 1; i < 9; i++)
             {
                 Instantiate(projectile, spawnPos[i].transform.position, spawnPos[i].transform.rotation);
+                audioSource.Play();
             }
         }
     }
-    #endregion
-
-    public int RollDice()
-    {
-        int ranInt = Random.Range(0, 6);
-        return ranInt;
-    }
+    #endregion  
 }

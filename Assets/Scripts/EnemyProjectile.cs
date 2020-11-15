@@ -2,19 +2,18 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Projectile : MonoBehaviour
+public class EnemyProjectile : MonoBehaviour
 {
     [SerializeField]
     float bulletSpeed = 10.0f;
     [SerializeField]
     GameObject particle;
     [SerializeField]
-    CharacterController2D player;
-
+    Dice dice;
 
     private void Start()
     {
-        player = GameObject.Find("Player").GetComponent<CharacterController2D>();
+        dice = GameObject.Find("Dice").GetComponent<Dice>();
     }
 
     void Update()
@@ -34,20 +33,18 @@ public class Projectile : MonoBehaviour
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (collision.transform.CompareTag("Enemy"))
+        if (collision.transform.CompareTag("Player"))
         {
-            Destroy(collision.gameObject);
             Destroy(this.gameObject);
             Instantiate(particle, this.transform.position, Quaternion.identity);
-            player.Score += 5;
-            
-        }    
+        }
 
-        if(collision.transform.CompareTag("Dice"))
+        if (collision.transform.CompareTag("Dice"))
         {
             Destroy(this.gameObject);
             GameManager.Instance.RandDie = GameManager.Instance.RollDice();
             Instantiate(particle, this.transform.position, Quaternion.identity);
-        } 
+            dice.Health -= 5;
+        }
     }
 }
